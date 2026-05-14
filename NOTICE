@@ -1,0 +1,19 @@
+taubenturret
+Copyright (C) 2026 Michael Weber
+
+This project relies on several open-source libraries. We would like to acknowledge and thank the developers and contributors of the following projects:
+
+* FastAPI (MIT License) - https://github.com/tiangolo/fastapi
+* Uvicorn (BSD-3-Clause License) - https://github.com/encode/uvicorn
+* Starlette (BSD-3-Clause License) - https://github.com/encode/starlette
+* Pydantic (MIT License) - https://github.com/pydantic/pydantic
+* NumPy (BSD-3-Clause License) - https://github.com/numpy/numpy
+* OpenCV-Python (MIT License) - https://github.com/opencv/opencv-python
+* OpenCV (Apache 2.0 License) - https://github.com/opencv/opencv
+* Requests (Apache 2.0 License) - https://github.com/psf/requests
+* urllib3 (MIT License) - https://github.com/urllib3/urllib3
+* python-dotenv (BSD-3-Clause License) - https://github.com/theskumar/python-dotenv
+* rpi-hardware-pwm (MIT License) - https://github.com/Pioreactor/rpi-hardware-pwm
+* Picamera2 (BSD-2-Clause License) - https://github.com/raspberrypi/picamera2
+
+See the respective source repositories for full license texts and copyright details.
