@@ -5,7 +5,7 @@ description = "An automated, computer vision driven water turret system for targ
 authors = [{ name = "Michael Weber", email = "mweberw@pm.me" }]
 readme = "README.md"
 keywords = ['python']
-license = { text = "MIT" }
+license = { text = "GPLv3" }
 requires-python = ">=3.10,<4.0"
 classifiers = [
     "Intended Audience :: Developers",
