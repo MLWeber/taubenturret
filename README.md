@@ -16,7 +16,7 @@ An automated, computer vision driven water turret system for targeted pigeon det
 ## Software Dependencies
 * Python 3.9+ 
 * `make` and `uv` for environment management.
-* An active external object detection backend API: [taubenturret_backend](https://MLWeber.github.io/taubenturret_backend/) 
+* An active external object detection backend API: [taubenturret_backend](https://github.com/MLWeber/taubenturret-backend) 
 * Required Python packages: `fastapi`, `uvicorn`, `opencv-python` (`cv2`), `numpy`, `requests`, and `picamera2`.
 
 ## Configuration
