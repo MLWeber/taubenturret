@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>TaubenTurret Recordings</title>
+    <style>
+        body { font-family: system-ui, sans-serif; margin: 0; padding: 2rem; background: #f4f4f9; color: #333; }
+        h1 { color: #222; text-align: center; margin-top: 0; }
+        .top-section { display: flex; flex-direction: column; align-items: center; margin-bottom: 2rem; }
+        .live-wrapper { position: relative; display: flex; justify-content: center; align-items: center; max-width: 100%; margin: 0 auto; background: #000; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
+        .live-wrapper:-webkit-full-screen { width: 100vw; height: 100vh; border-radius: 0; }
+        .live-wrapper:fullscreen { width: 100vw; height: 100vh; border-radius: 0; }
+        .player-wrapper { display: flex; flex-direction: column; width: 100%; max-width: 640px; margin: 0 auto; }
+        #live-stream { width: calc(70vh * 4 / 3); max-width: 100%; aspect-ratio: 4 / 3; display: block; }
+        .live-wrapper:-webkit-full-screen #live-stream { width: calc(100vh * 4 / 3); }
+        .live-wrapper:fullscreen #live-stream { width: calc(100vh * 4 / 3); }
+        video { width: 100%; aspect-ratio: 4/3; background: #000; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
+        video::-webkit-media-controls-volume-control-container { display: none !important; }
+        video::-webkit-media-controls-volume-slider { display: none !important; }
+        video::-webkit-media-controls-mute-button { display: none !important; }
+        .player-bottom { display: flex; justify-content: space-between; align-items: center; width: 100%; margin-top: 10px; }
+        .current-actions { display: flex; gap: 10px; }
+        .container { max-width: 1000px; margin: 0 auto; background: #fff; padding: 2rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .gallery-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 15px; }
+        .gallery-item { position: relative; display: flex; flex-direction: column; }
+        .gallery-item img { width: 100%; aspect-ratio: 4/3; object-fit: cover; border-radius: 4px; display: block; cursor: pointer; border: 2px solid transparent; transition: border-color 0.2s; }
+        .gallery-item img:hover { border-color: #007BFF; }
+        .gallery-item input[type='checkbox'] { position: absolute; top: 5px; left: 5px; z-index: 10; width: 18px; height: 18px; cursor: pointer; }
+        .size-label { font-size: 0.8rem; text-align: center; margin-top: 5px; color: #666; word-break: break-all; }
+        .day-group { margin-bottom: 2rem; }
+        .day-header { background: #e9ecef; padding: 0.75rem 1rem; border-radius: 6px; font-weight: bold; display: flex; align-items: center; gap: 10px; margin-bottom: 1rem; }
+        .controls { margin-bottom: 1.5rem; display: flex; gap: 10px; }
+        button, .btn { background: #DC3545; color: white; border: none; padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer; font-weight: bold; text-decoration: none; text-align: center; font-size: 0.9rem; }
+        .btn-blue { background: #007BFF; }
+        button:hover, .btn:hover { filter: brightness(0.9); }
+        button:disabled { background: #ccc; cursor: not-allowed; }
+        .tabs { display: flex; justify-content: center; gap: 15px; margin-bottom: 2rem; border-bottom: 2px solid #ddd; padding-bottom: 15px; }
+        .tab-button { background: #e9ecef; color: #333; font-size: 1.1rem; padding: 10px 25px; border-radius: 8px; transition: background 0.2s; }
+        .tab-button.active { background: #007BFF; color: white; }
+        .stream-overlay { position: absolute; bottom: 15px; right: 15px; display: flex; gap: 10px; z-index: 10; }
+        .targeting-active {
+            cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><line x1="12" y1="0" x2="12" y2="24" stroke="lime" stroke-width="2"/><line x1="0" y1="12" x2="24" y2="12" stroke="lime" stroke-width="2"/></svg>') 12 12, crosshair !important;
+        }
+        .targeting-cooldown {
+            cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><line x1="12" y1="0" x2="12" y2="24" stroke="red" stroke-width="2"/><line x1="0" y1="12" x2="24" y2="12" stroke="red" stroke-width="2"/></svg>') 12 12, crosshair !important;
+        }
+    </style>
+    <script>
+        let currentFile = null;
+        function loadVideo(filename) {
+            currentFile = filename;
+            const player = document.getElementById('main-player');
+            player.src = `/videos/${filename}`;
+            player.play().catch(e => {});
+            document.getElementById('current-download-btn').href = `/videos/${filename}`;
+            document.getElementById('current-download-btn').download = filename;
+            document.getElementById('current-filename').innerText = filename;
+        }
+        async function deleteCurrent() {
+            if (!currentFile) return;
+            if (!confirm(`Permanently delete ${currentFile}?`)) return;
+            await fetch(`/videos/${currentFile}`, { method: 'DELETE' });
+            
+            currentFile = null;
+            const player = document.getElementById('main-player');
+            player.removeAttribute('src');
+            player.load();
+            document.getElementById('current-download-btn').removeAttribute('href');
+            document.getElementById('current-filename').innerText = "No video selected";
+            
+            await refreshGallery();
+        }
+        function toggleDay(dayStr, checked) {
+            const checkboxes = document.querySelectorAll(`.day-${dayStr}`);
+            checkboxes.forEach(cb => cb.checked = checked);
+            updateDeleteButton();
+        }
+        function updateDeleteButton() {
+            const checked = document.querySelectorAll('.video-cb:checked');
+            const btn = document.getElementById('delete-btn');
+            btn.disabled = checked.length === 0;
+            btn.innerText = `Delete Selected (${checked.length})`;
+        }
+        async function deleteSelected() {
+            const checked = document.querySelectorAll('.video-cb:checked');
+            if (checked.length === 0) return;
+            if (!confirm(`Permanently delete ${checked.length} video(s)?`)) return;
+            const btn = document.getElementById('delete-btn');
+            btn.disabled = true;
+            btn.innerText = 'Deleting...';
+            for (let cb of checked) {
+                await fetch(`/videos/${cb.value}`, { method: 'DELETE' });
+                if (currentFile === cb.value) {
+                    currentFile = null;
+                    const player = document.getElementById('main-player');
+                    player.removeAttribute('src');
+                    player.load();
+                    document.getElementById('current-download-btn').removeAttribute('href');
+                    document.getElementById('current-filename').innerText = "No video selected";
+                }
+            }
+            await refreshGallery();
+        }
+
+        async function refreshGallery() {
+            try {
+                const response = await fetch('/api/gallery');
+                if (response.ok) {
+                    const html = await response.text();
+                    document.getElementById('gallery-container').innerHTML = html;
+                    updateDeleteButton(); // Reset button state in case selections changed
+                } else {
+                    console.error('Failed to load gallery:', response.statusText);
+                }
+            } catch (error) {
+                console.error('Error refreshing gallery:', error);
+            }
+        }
+
+        function showTab(tabId) {
+            const isAlreadyLoaded = document.getElementById(`tab-${tabId}`).style.display === 'block';
+
+            document.getElementById('tab-live').style.display = tabId === 'live' ? 'block' : 'none';
+            document.getElementById('tab-recordings').style.display = tabId === 'recordings' ? 'block' : 'none';
+
+            document.getElementById('btn-live').classList.toggle('active', tabId === 'live');
+            document.getElementById('btn-recordings').classList.toggle('active', tabId === 'recordings');
+
+            if (tabId === 'live') {
+                if (isAlreadyLoaded) {
+                    reconnectStream();
+                } else {
+                    document.getElementById('live-stream').src = '/stream?' + new Date().getTime();
+                }
+            } else {
+                document.getElementById('live-stream').removeAttribute('src');
+            }
+
+            if (tabId === 'recordings' && isAlreadyLoaded) {
+                refreshGallery();
+            }
+        }
+
+        let manualTargeting = false;
+        const FIRE_COOLDOWN_MS = {{ FIRE_COOLDOWN_MS }};
+        let lastFireTime = 0;
+
+        function toggleManualTargeting() {
+            manualTargeting = !manualTargeting;
+            const btn = document.getElementById('btn-manual-target');
+            const img = document.getElementById('live-stream');
+            if (manualTargeting) {
+                btn.innerText = 'Manual Aim: ON';
+                btn.style.background = '#28a745'; // Greenish
+                const now = Date.now();
+                if (now - lastFireTime < FIRE_COOLDOWN_MS) {
+                    img.classList.add('targeting-cooldown');
+                    setTimeout(() => {
+                        if (manualTargeting) {
+                            img.classList.remove('targeting-cooldown');
+                            img.classList.add('targeting-active');
+                        }
+                    }, FIRE_COOLDOWN_MS - (now - lastFireTime));
+                } else {
+                    img.classList.add('targeting-active');
+                }
+            } else {
+                btn.innerText = 'Manual Aim: OFF';
+                btn.style.background = '#6c757d'; // Reset to gray
+                img.classList.remove('targeting-active');
+                img.classList.remove('targeting-cooldown');
+            }
+        }
+
+        function toggleFullscreen() {
+            const container = document.querySelector('.live-wrapper');
+            (!document.fullscreenElement) ? container.requestFullscreen() : document.exitFullscreen();
+        }
+
+        async function handleStreamClick(event) {
+            if (!manualTargeting) return;
+
+            const now = Date.now();
+            if (now - lastFireTime < FIRE_COOLDOWN_MS) {
+                return; // Cooldown active, ignore click
+            }
+            lastFireTime = now;
+
+            const img = event.target;
+            img.classList.remove('targeting-active');
+            img.classList.add('targeting-cooldown');
+            setTimeout(() => {
+                if (manualTargeting) {
+                    img.classList.remove('targeting-cooldown');
+                    img.classList.add('targeting-active');
+                }
+            }, FIRE_COOLDOWN_MS);
+
+            const rect = event.target.getBoundingClientRect();
+            const x = event.clientX - rect.left;
+            const y = event.clientY - rect.top;
+
+            // Calculate coordinates as a percentage (0.0 to 1.0)
+            const pctX = x / rect.width;
+            const pctY = y / rect.height;
+
+            console.log(`Target Clicked at: X=${(pctX*100).toFixed(1)}%, Y=${(pctY*100).toFixed(1)}%`);
+            try {
+                await fetch('/api/fire_manual', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({x: pctX, y: pctY}) });
+            } catch (e) {
+                console.error("Failed to fire manual shot", e);
+            }
+        }
+
+        function handleStreamDisconnect(img) {
+            if (document.getElementById('tab-live').style.display !== 'none') {
+                document.getElementById('stream-error-overlay').style.display = 'flex';
+            }
+        }
+
+        function reconnectStream() {
+            document.getElementById('stream-error-overlay').style.display = 'none';
+            const img = document.getElementById('live-stream');
+            // Temporarily clear src to force a hard reload of the element
+            img.removeAttribute('src');
+            setTimeout(() => { img.src = '/stream?' + new Date().getTime(); }, 50);
+        }
+        
+        function handleStreamLoad() {
+            document.getElementById('stream-error-overlay').style.display = 'none';
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            showTab('live');
+        });
+    </script>
+</head>
+<body>
+    <h1>TaubenTurret UI</h1>
+
+    <div class="tabs">
+        <button id="btn-live" class="tab-button active" onclick="showTab('live')">Live Stream</button>
+        <button id="btn-recordings" class="tab-button" onclick="showTab('recordings')">Recordings</button>
+    </div>
+
+    <div id="tab-live" style="display: block;">
+        <div class="top-section">
+            <div class="live-wrapper">
+                <div id="stream-error-overlay" style="display: none; position: absolute; inset: 0; background: rgba(0,0,0,0.7); color: white; flex-direction: column; justify-content: center; align-items: center; z-index: 20;">
+                    <p style="margin-bottom: 1rem; font-size: 1.2rem;">Stream Connection Lost</p>
+                    <button class="btn btn-blue" onclick="reconnectStream()">Reconnect</button>
+                </div>
+                <div class="stream-overlay">
+                    <button id="btn-manual-target" class="btn" style="background: #6c757d;" onclick="toggleManualTargeting()">Manual Aim: OFF</button>
+                    <button class="btn btn-blue" onclick="toggleFullscreen()">Fullscreen</button>
+                </div>
+                <!-- src is injected dynamically by JS to prevent double-fetching and connection stalls -->
+                <img id="live-stream" alt="Live Stream" onclick="handleStreamClick(event)" onerror="handleStreamDisconnect(this)" onload="handleStreamLoad()">
+            </div>
+            <div style="text-align: center; margin-top: 10px; color: #555;">
+                <small>Enable Manual Aim to click and fire the turret.</small>
+            </div>
+        </div>
+    </div>
+
+    <div id="tab-recordings" style="display: none;">
+        <div class='top-section'>
+            <div class='player-wrapper'>
+                <video id='main-player' controls muted></video>
+                <div class='player-bottom'>
+                    <div id='current-filename' style='font-family: monospace; color: #555; font-size: 1.1rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding-right: 10px;'>No video selected</div>
+                    <div class='current-actions'>
+                        <a id='current-download-btn' class='btn btn-blue' href='#' download>Download</a>
+                        <button onclick='deleteCurrent()'>Delete</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class='container'>
+            <div class='controls'>
+                <button class='btn btn-blue' onclick='refreshGallery()'>Refresh</button>
+                <button id='delete-btn' onclick='deleteSelected()' disabled>Delete Selected (0)</button>
+            </div>
+            <div id="gallery-container">
+                {{ GALLERY_HTML }}
+            </div>
+        </div>
+    </div>
+</body>
+</html>
