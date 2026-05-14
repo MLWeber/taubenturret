@@ -31,9 +31,9 @@ dependencies = [
 taubenturret = "taubenturret.main:main"
 
 [project.urls]
-Homepage = "https://MLWeber.github.io/taubenturret/"
+Homepage = "https://github.com/MLWeber/taubenturret"
 Repository = "https://github.com/MLWeber/taubenturret"
-Documentation = "https://MLWeber.github.io/taubenturret/"
+Documentation = "https://github.com/MLWeber/taubenturret"
 
 [dependency-groups]
 dev = [
