@@ -6,17 +6,16 @@ An automated, computer vision driven water turret system for targeted pigeon det
 * **Automated Targeting:** Uses a Raspberry Pi Camera to detect motion, triggering an external AI object detection API to identify pigeons.
 * **Pan/Tilt Control:** Calculates 3D physical angles from 2D pixel coordinates to smoothly aim the watergun via PWM-controlled servos.
 * **Web Interface:** Includes a built-in FastAPI web UI for viewing the live MJPEG stream, manual firing, and browsing recorded video clips.
-* **Auto-Recording:** Captures and saves `.mp4` or `.h264` video events whenever motion is detected.
+* **Auto-Recording:** Captures and saves `.mp4` video events whenever motion is detected.
 
 ## Hardware Requirements
-* **Raspberry Pi** with a compatible camera module (requires `picamera2` support).
-* **Pan & Tilt Servos** for aiming the turret.
-* **Water Pump or Solenoid Valve** hooked up to a GPIO relay to fire the water.
+* Raspberry Pi with a compatible camera module (requires `picamera2` support).
+* 3D models and detailed list available [on makerworld](https://makerworld.com/de/models/2801562-taubenturret-automated-pigeon-deterrent).  
 
 ## Software Dependencies
 * Python 3.9+ 
 * `make` and `uv` for environment management.
-* An active external object detection backend API: [taubenturret_backend](https://github.com/MLWeber/taubenturret-backend) 
+* An active external object detection backend API: [taubenturret-backend](https://github.com/MLWeber/taubenturret-backend) 
 * Required Python packages: `fastapi`, `uvicorn`, `opencv-python` (`cv2`), `numpy`, `requests`, and `picamera2`.
 
 ## Configuration
