@@ -1,6 +1,6 @@
 [project]
 name = "taubenturret"
-version = "1.0.0"
+version = "1.1.0"
 description = "An automated, computer vision driven water turret system for targeted pigeon deterrence."
 authors = [{ name = "Michael Weber", email = "mweberw@pm.me" }]
 readme = "README.md"
