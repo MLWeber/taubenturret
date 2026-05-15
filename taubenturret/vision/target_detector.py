@@ -18,6 +18,7 @@
 
 import logging
 import time
+import urllib.parse
 from dataclasses import dataclass
 
 import cv2
@@ -57,14 +58,29 @@ class TargetDetector:
         detection API to verify connectivity.
         """
         self.http_session: requests.Session = requests.Session()
+        self._validate_detector_classes()
+
+    def _validate_detector_classes(self) -> None:
         try:
             res: requests.Response = self.http_session.get(config.DETECTOR_API_URL + "ping")
             if res.status_code == 200:
                 logger.info("Successfully pinged detection API.")
             else:
                 logger.warning(f"Failed to ping detection API: {res.status_code}")
+
+            classes_res: requests.Response = self.http_session.get(config.DETECTOR_API_URL + "classes")
+            if classes_res.status_code == 200:
+                supported_classes = classes_res.json()["classes"]
+
+                target_classes = urllib.parse.unquote(config.DETECTOR_TARGET_CLASSES).split(",")
+                for tc in target_classes:
+                    tc = urllib.parse.quote(tc.strip().lower())
+                    if tc and tc not in supported_classes:
+                        logger.warning(f"Configured class '{tc}' is not supported by the backend!")
+            else:
+                logger.warning(f"Could not fetch supported classes for validation: {classes_res.status_code}")
         except Exception:
-            logger.exception("Failed to ping detection API.")
+            logger.exception("Could not fetch supported classes for validation.")
 
     def _prepare_image(self, frame: np.ndarray, motion_region: dict[str, int] | None) -> tuple[np.ndarray, int, int]:
         """
@@ -134,7 +150,7 @@ class TargetDetector:
         try:
             _, jpeg_buffer = cv2.imencode(".jpg", img)
             res: requests.Response = self.http_session.post(
-                config.DETECTOR_API_URL + "detect/bird",
+                config.DETECTOR_API_URL + f"detect/{config.DETECTOR_TARGET_CLASSES}",
                 files={"image": ("image.jpg", jpeg_buffer.tobytes(), "image/jpeg")},
                 timeout=3,
             )

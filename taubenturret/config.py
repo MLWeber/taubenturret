@@ -16,6 +16,7 @@
 
 import logging
 import os
+import urllib.parse
 
 try:
     from dotenv import load_dotenv
@@ -88,6 +89,7 @@ CAM_SCALE_FACTOR: float = _get_float("CAM_SCALE_FACTOR", 0.39)
 
 # --- Target Detector ---
 DETECTOR_API_URL: str = _get_str("DETECTOR_API_URL", "http://127.0.0.1:8081/v1/").rstrip("/") + "/"
+DETECTOR_TARGET_CLASSES: str = urllib.parse.quote(_get_str("DETECTOR_TARGET_CLASSES", "bird").lower())
 DETECTOR_CROP_PADDING_FACTOR: float = _get_float("DETECTOR_CROP_PADDING_FACTOR", 1.2)
 DETECTOR_CROP_WIDTH: int = _get_int("DETECTOR_CROP_WIDTH", 640)
 DETECTOR_CROP_HEIGHT: int = _get_int("DETECTOR_CROP_HEIGHT", 480)
