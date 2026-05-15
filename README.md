@@ -1,6 +1,6 @@
 # taubenturret
 
-An automated, computer vision driven water turret system for targeted pigeon deterrence.
+Control software for the [TaubenTurret system](https://makerworld.com/de/models/2801562-taubenturret-automated-pigeon-deterrent): An automated, computer vision driven water turret system for targeted pigeon deterrence.
 
 ## Features
 * **Automated Targeting:** Uses a Raspberry Pi Camera to detect motion, triggering an external AI object detection API to identify pigeons.
@@ -9,8 +9,7 @@ An automated, computer vision driven water turret system for targeted pigeon det
 * **Auto-Recording:** Captures and saves `.mp4` video events whenever motion is detected.
 
 ## Hardware Requirements
-* Raspberry Pi with a compatible camera module (requires `picamera2` support).
-* 3D models and detailed list available [on makerworld](https://makerworld.com/de/models/2801562-taubenturret-automated-pigeon-deterrent).  
+* 3D models and hardware list available [on makerworld](https://makerworld.com/de/models/2801562-taubenturret-automated-pigeon-deterrent).  
 
 ## Software Dependencies
 * Python 3.9+ 
