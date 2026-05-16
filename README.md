@@ -4,9 +4,13 @@ Control software for the [TaubenTurret system](https://makerworld.com/de/models/
 
 ## Demo & Screenshots
 
-![Turret firing at a target](assets/demo.gif)
-
-![Web Interface - Live View](assets/ui_live.png)  ![Web Interface - Recordings](assets/ui_recordings.png)
+<p align="center">
+  <img src="assets/demo.gif" alt="Turret firing at a target" width="60%">
+</p>
+<p align="center">
+  <img src="assets/ui_live.png" alt="Web Interface - Live View" width="49%">
+  <img src="assets/ui_recordings.png" alt="Web Interface - Recordings" width="49%">
+</p>
 
 ## Features
 * **Automated Targeting:** Uses a Raspberry Pi Camera to detect motion, triggering an external AI object detection API to identify pigeons.
